@@ -1,212 +1,3 @@
-'''
-cantidad=int(input("Cuántas personas son?: "))
-lista1=[]
-total=0
-
-for i in range(cantidad):
-    nombre=input("Ingrese el nombre: ")
-    importe=int(input("Ingrese el importe: "))
-    total+=importe
-    elemento=[nombre, importe]
-    lista1.append(elemento)
-    
-print(lista1)
-
-print("El total del asado es de $"+str(total))
-
-resultado=total/cantidad
-
-print("Cada persona debe abonar $"+ str(resultado))
-
-for i in range(cantidad):
-    if resultado < lista1[i][1]:
-        print(lista1[i][0]+" recibirá "+ str(lista1[i][1] - resultado))
-    elif resultado > lista1[i][1]:
-        print(lista1[i][0]+" devolverá "+ str(lista1[i][1] - resultado))
-    elif resultado == lista1[i][1]:
-        print(lista1[i][0]+" entregó el valor exacto.")
-
-'''
-
-#-------------------- otra forma de hacerlo -------------------
-'''
-import csv
-
-# Solicitar cantidad de personas
-cantidad = int(input("¿Cuántas personas son?: "))
-personas = []
-total = 0
-
-# Ingreso de datos
-for _ in range(cantidad):
-    nombre = input("Ingrese el nombre: ")
-    importe = float(input("Ingrese el importe aportado: $"))
-    personas.append({"nombre": nombre, "importe": round(importe, 2)})
-    total += importe
-
-# Cálculo del promedio
-promedio = round(total / cantidad, 2)
-
-# Mostrar resumen
-print("\n📋 Resumen de aportes:")
-for p in personas:
-    print(f"- {p['nombre']} aportó ${p['importe']}")
-
-print(f"\n💰 Total del asado: ${round(total, 2)}")
-print(f"💸 Cada persona debe abonar: ${promedio}\n")
-
-# Cálculo de ajustes
-for p in personas:
-    diferencia = round(p["importe"] - promedio, 2)
-    if diferencia > 0:
-        print(f"✅ {p['nombre']} recibirá ${diferencia}")
-    elif diferencia < 0:
-        print(f"⚠️ {p['nombre']} debe devolver ${abs(diferencia)}")
-    else:
-        print(f"👌 {p['nombre']} aportó el monto justo.")
-
-# Guardar en archivo CSV
-with open("asado.csv", "w", newline="", encoding="utf-8") as archivo:
-    campos = ["Nombre", "Importe", "Ajuste"]
-    writer = csv.DictWriter(archivo, fieldnames=campos)
-    writer.writeheader()
-    for p in personas:
-        diferencia = round(p["importe"] - promedio, 2)
-        ajuste = (
-            f"Recibe ${diferencia}" if diferencia > 0
-            else f"Debe ${abs(diferencia)}" if diferencia < 0
-            else "Monto justo"
-        )
-        writer.writerow({"Nombre": p["nombre"], "Importe": p["importe"], "Ajuste": ajuste})
-
-print("\n📁 Los datos se guardaron en el archivo 'asado.csv'. ¡Listo para compartir!")
-
-'''
-#-------------------- otra forma de hacerlo -------------------
-'''
-#cantidad = int(input("Cuántas personas son?: "))
-lista1 = []
-total = 0
-
-for i in range(cantidad):
-    nombre = input("Ingrese el nombre: ")
-    importe = int(input("Ingrese el importe: "))
-    total += importe
-    elemento = [nombre, importe]
-    lista1.append(elemento)
-   
-print(lista1)
-print("El total del asado es de $" + str(total))
-resultado = total / cantidad
-print("Cada persona debe abonar $" + str(round(resultado, 2)))
-
-# Listas para manejar las transacciones
-acreedores = []  # Personas que deben recibir dinero
-deudores = []    # Personas que deben pagar dinero
-
-print("\n--- BALANCE INDIVIDUAL ---")
-# Calcular quién debe recibir y quién debe pagar
-for i in range(cantidad):
-    diferencia = lista1[i][1] - resultado
-    if diferencia > 0:  # Pagó de más, debe recibir
-        acreedores.append([lista1[i][0], round(diferencia, 2)])
-        print(f"{lista1[i][0]} recibirá ${round(diferencia, 2)}")
-    elif diferencia < 0:  # Pagó de menos, debe pagar
-        deudores.append([lista1[i][0], round(abs(diferencia), 2)])
-        print(f"{lista1[i][0]} debe agregar ${round(abs(diferencia), 2)}")
-    else:  # Pagó exacto
-        print(f"{lista1[i][0]} entregó el valor exacto.")
-
-print("\n--- TRANSACCIONES ESPECÍFICAS ---")
-
-# Realizar las transacciones
-acreedor_idx = 0
-deudor_idx = 0
-
-while acreedor_idx < len(acreedores) and deudor_idx < len(deudores):
-    acreedor = acreedores[acreedor_idx]
-    deudor = deudores[deudor_idx]
-    
-    # Determinar cuánto se transfiere
-    monto_transferencia = min(acreedor[1], deudor[1])
-    
-    print(f"{deudor[0]} le debe dar ${round(monto_transferencia, 2)} a {acreedor[0]}")
-    
-    # Actualizar los montos
-    acreedor[1] -= monto_transferencia
-    deudor[1] -= monto_transferencia
-    
-    # Si el acreedor ya recibió todo lo suyo, pasar al siguiente
-    if acreedor[1] == 0:
-        acreedor_idx += 1
-    
-    # Si el deudor ya pagó todo lo suyo, pasar al siguiente
-    if deudor[1] == 0:
-        deudor_idx += 1
-'''
-#-------------------- otra forma de hacerlo  para android-------------------
-'''
-cantidad = int(input("Cuántas personas son?: "))
-lista1 = []
-total = 0
-
-for i in range(cantidad):
-    nombre = input("Ingrese el nombre: ")
-    importe = int(input("Ingrese el importe: "))
-    total += importe
-    elemento = [nombre, importe]
-    lista1.append(elemento)
-   
-print(lista1)
-print("El total del asado es de $" + str(total))
-resultado = total / cantidad
-print("Cada persona debe abonar $" + str(round(resultado, 2)))
-
-# Listas para manejar las transacciones
-acreedores = []  # Personas que deben recibir dinero
-deudores = []    # Personas que deben pagar dinero
-
-print("\n--- BALANCE INDIVIDUAL ---")
-# Calcular quién debe recibir y quién debe pagar
-for i in range(len(lista1)):  # ← AQUÍ ESTÁ EL CAMBIO CLAVE
-    diferencia = lista1[i][1] - resultado
-    if diferencia > 0:  # Pagó de más, debe recibir
-        acreedores.append([lista1[i][0], round(diferencia, 2)])
-        print(f"{lista1[i][0]} recibirá ${round(diferencia, 2)}")
-    elif diferencia < 0:  # Pagó de menos, debe pagar
-        deudores.append([lista1[i][0], round(abs(diferencia), 2)])
-        print(f"{lista1[i][0]} debe Pagar ${round(abs(diferencia), 2)}")
-    else:  # Pagó exacto
-        print(f"{lista1[i][0]} entregó el valor exacto.")
-
-print("\n--- Quien Paga a Quien ? ---")
-
-# Realizar las transacciones
-acreedor_idx = 0
-deudor_idx = 0
-
-while acreedor_idx < len(acreedores) and deudor_idx < len(deudores):
-    acreedor = acreedores[acreedor_idx]
-    deudor = deudores[deudor_idx]
-    
-    # Determinar cuánto se transfiere
-    monto_transferencia = min(acreedor[1], deudor[1])
-    
-    print(f"{deudor[0]} debe darle ${round(monto_transferencia, 2)} a {acreedor[0]}")
-    
-    # Actualizar los montos
-    acreedor[1] -= monto_transferencia
-    deudor[1] -= monto_transferencia
-    
-    # Si el acreedor ya recibió todo lo suyo, pasar al siguiente
-    if acreedor[1] == 0:
-        acreedor_idx += 1
-    
-    # Si el deudor ya pagó todo lo suyo, pasar al siguiente
-    if deudor[1] == 0:
-        deudor_idx += 1
-'''#-------------------- otra forma de hacerlo -------------------
-'''
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -219,6 +10,8 @@ while acreedor_idx < len(acreedores) and deudor_idx < len(deudores):
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="CuentasClaras">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="https://via.placeholder.com/32x32/667eea/ffffff?text=CC">
     
     <style>
         * {
@@ -679,21 +472,21 @@ while acreedor_idx < len(acreedores) and deudor_idx < len(deudores):
     <div class="container">
         <div class="header">
             <h1>🍖 Cuentas Claras</h1>
-            <p>División Justa de Gastos Para tu Asado o Reunion</p>
+            <p>División justa de gastos para tu asado</p>
         </div>
 
         <div class="content">
             <div class="step">
-                <h3><span class="step-number">1</span> ¿Cuántas Personas Participaran Hoy?</h3>
+                <h3><span class="step-number">1</span> ¿Cuántas personas participaron?</h3>
                 <div class="input-group">
-                    <label for="cantidad">Número de Personas:</label>
+                    <label for="cantidad">Número de personas:</label>
                     <input type="number" id="cantidad" min="2" max="20" placeholder="Ej: 5">
                 </div>
                 <button class="btn" onclick="crearFormulario(this)">Siguiente</button>
             </div>
 
             <div class="step personas-container" id="personasContainer">
-                <h3><span class="step-number">2</span> Ingresa los Datos de Cada Persona</h3>
+                <h3><span class="step-number">2</span> Ingresa los datos de cada persona</h3>
                 <div id="personasForm"></div>
                 <button class="btn btn-secondary" onclick="calcularDivision(this)">Calcular División</button>
             </div>
@@ -935,7 +728,3 @@ while acreedor_idx < len(acreedores) and deudor_idx < len(deudores):
     </script>
 </body>
 </html>
-'''
-
-#-------------------- forma basica de hacerlo -------------------
-
