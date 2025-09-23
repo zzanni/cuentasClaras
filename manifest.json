@@ -1,7 +1,7 @@
 {
   "name": "Cuentas Claras - División de Gastos",
   "short_name": "CuentasClaras",
-  "description": "División justa de gastos para asados",
+  "description": "Te Ayuda a Dividir Los Gastos Para tu Asado o Reunión",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#667eea",
