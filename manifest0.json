@@ -1,0 +1,37 @@
+{
+  "id": "/cuentasClaras",
+  "name": "Cuentas Claras - División de Gastos",
+  "short_name": "CuentasClaras",
+  "description": "División justa de gastos para asados",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "orientation": "portrait",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/667eea/ffffff?text=CC",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/667eea/ffffff?text=CC",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://zzanni.github.io/cuentasClaras/screenshot1.png",
+      "sizes": "575x1007",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["finance", "utilities"],
+  "lang": "es",
+  "dir": "ltr",
+  "prefer_related_applications": false
+}
