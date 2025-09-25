@@ -1,4 +1,5 @@
-const CACHE_NAME = 'cuentas-claras-v1';
+const CACHE_NAME = 'cuentas-claras-v' + Date.now();
+const STATIC_CACHE = 'cuentas-claras-static-v2.1.0';
 const urlsToCache = [
   './',
   './index.html',
@@ -7,8 +8,10 @@ const urlsToCache = [
 
 // Instalar Service Worker
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
+  
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches.open(STATIC_CACHE)
       .then((cache) => {
         console.log('Cache abierto');
         return cache.addAll(urlsToCache);
@@ -16,28 +19,37 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Interceptar requests
+// Interceptar requests con estrategia Network First
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then((response) => {
-        // Devolver del cache si existe
-        if (response) {
-          return response;
+        if (response && response.status === 200) {
+          const responseClone = response.clone();
+          caches.open(STATIC_CACHE)
+            .then((cache) => {
+              cache.put(event.request, responseClone);
+            });
         }
-        // Sino, fetch de la red
-        return fetch(event.request);
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request);
       })
   );
 });
 
-// Activar Service Worker
+// Activar Service Worker y limpiar caches viejos
 self.addEventListener('activate', (event) => {
+  self.clients.claim();
+  
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheName !== STATIC_CACHE && cacheName.startsWith('cuentas-claras-')) {
             console.log('Eliminando cache viejo:', cacheName);
             return caches.delete(cacheName);
           }
