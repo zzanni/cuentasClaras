@@ -1,12 +1,11 @@
 const CACHE_NAME = 'cuentas-claras-v' + Date.now();
-const STATIC_CACHE = 'cuentas-claras-static-v2.1.0';
+const STATIC_CACHE = 'cuentas-claras-static-v2.2.0';
 const urlsToCache = [
   './',
   './index.html',
   './manifest.json'
 ];
 
-// Instalar Service Worker
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   
@@ -19,7 +18,6 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Interceptar requests con estrategia Network First
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   
@@ -41,7 +39,6 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Activar Service Worker y limpiar caches viejos
 self.addEventListener('activate', (event) => {
   self.clients.claim();
   

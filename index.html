@@ -547,26 +547,21 @@
 
         // Forzar recarga sin cache
         function forzarRecargaSinCache() {
-            // Versión de la app para forzar actualizaciones
-            const VERSION_APP = '2.1.0';
+            const VERSION_APP = '2.2.0';
             const versionGuardada = localStorage.getItem('app_version');
             
             if (versionGuardada !== VERSION_APP) {
                 localStorage.setItem('app_version', VERSION_APP);
-                // Forzar recarga completa
                 if (versionGuardada !== null) {
                     location.reload(true);
                 }
             }
         }
 
-        // Ejecutar al cargar
         forzarRecargaSinCache();
 
-        // Detectar actualizaciones del Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.addEventListener('controllerchange', () => {
-                // Nueva versión disponible, recargar automáticamente
                 location.reload(true);
             });
         }
@@ -629,9 +624,7 @@
             const cantidad = parseInt(document.getElementById('cantidad').value);
             personas = [];
             let total = 0;
-            let hasErrors = false;
 
-            // Recopilar y validar datos
             for (let i = 0; i < cantidad; i++) {
                 const nombre = document.getElementById(`nombre${i}`).value.trim().toUpperCase();
                 const importeInput = document.getElementById(`importe${i}`);
@@ -661,7 +654,6 @@
             mostrarLoading(button);
 
             setTimeout(() => {
-                // Calcular división
                 const promedio = total / cantidad;
                 const acreedores = [];
                 const deudores = [];
@@ -691,7 +683,6 @@
 
                 resultadoHTML += '</div>';
 
-                // Calcular transacciones específicas
                 if (acreedores.length > 0 && deudores.length > 0) {
                     resultadoHTML += `
                         <div class="transacciones-section">
@@ -724,7 +715,6 @@
                     resultadoHTML += '<div class="balance-item exacto" style="text-align: center; font-size: 1.2rem; margin-top: 20px;">🎉 ¡Todas las cuentas están perfectamente balanceadas!</div>';
                 }
 
-                // Sección WhatsApp
                 resultadoHTML += `
                     <div class="whatsapp-section">
                         <h3>📱 Enviar por WhatsApp</h3>
@@ -739,7 +729,6 @@
                             <h4 style="color: #128c7e; margin-bottom: 10px;">Enviar a cada persona:</h4>
                 `;
 
-                // Botones individuales para cada persona
                 personas.forEach((persona, index) => {
                     const diferencia = persona.importe - promedio;
                     let mensaje = '';
@@ -780,21 +769,18 @@
             document.querySelector('.container').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Eventos de teclado
         document.getElementById('cantidad').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 document.querySelector('.btn').click();
             }
         });
 
-        // PWA Service Worker con control de versiones
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register('./sw.js?v=' + Date.now())
                     .then(function(registration) {
                         console.log('SW registered: ', registration);
                         
-                        // Verificar actualizaciones cada 30 segundos
                         setInterval(() => {
                             registration.update();
                         }, 30000);
@@ -804,7 +790,6 @@
                             newWorker.addEventListener('statechange', () => {
                                 if (newWorker.state === 'installed') {
                                     if (navigator.serviceWorker.controller) {
-                                        // Nueva versión disponible
                                         if (confirm('¡Nueva versión disponible! ¿Quieres actualizar?')) {
                                             window.location.reload(true);
                                         }
@@ -818,7 +803,6 @@
             });
         }
 
-        // PWA Install Prompt
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -827,11 +811,114 @@
             const installButton = document.createElement('button');
             installButton.className = 'install-button';
             installButton.innerHTML = '📱 Instalar App';
-            installButton.addEventListener('click', () => {
-        // Your code here
-    });
-    
-    document.body.appendChild(installButton);
-});
-
             
+            installButton.addEventListener('click', () => {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                        installButton.remove();
+                    }
+                    deferredPrompt = null;
+                });
+            });
+            
+            document.body.appendChild(installButton);
+        });
+
+        // Funciones WhatsApp
+        function enviarWhatsAppIndividual(nombre, mensaje) {
+            const mensajeFinal = `🍖 *Cuentas Claras* 🍖\n\n${mensaje}\n\n_Mensaje generado por Cuentas Claras App by Zanni_ 👨‍💻`;
+            const url = `https://wa.me/?text=${encodeURIComponent(mensajeFinal)}`;
+            window.open(url, '_blank');
+        }
+
+        function enviarResumenCompleto() {
+            const cantidad = personas.length;
+            const total = personas.reduce((sum, p) => sum + p.importe, 0);
+            const promedio = total / cantidad;
+
+            let mensaje = `🍖 *CUENTAS CLARAS - RESUMEN COMPLETO* 🍖\n\n`;
+            mensaje += `💰 *Total gastado:* ${total.toFixed(2)}\n`;
+            mensaje += `👥 *Personas:* ${cantidad}\n`;
+            mensaje += `📊 *Cada uno debe:* ${promedio.toFixed(2)}\n\n`;
+            
+            mensaje += `*📋 BALANCE INDIVIDUAL:*\n`;
+            personas.forEach(persona => {
+                const diferencia = persona.importe - promedio;
+                if (Math.abs(diferencia) < 0.01) {
+                    mensaje += `✅ ${persona.nombre}: Valor exacto\n`;
+                } else if (diferencia > 0) {
+                    mensaje += `💵 ${persona.nombre}: Recibe ${diferencia.toFixed(2)}\n`;
+                } else {
+                    mensaje += `💸 ${persona.nombre}: Debe ${Math.abs(diferencia).toFixed(2)}\n`;
+                }
+            });
+
+            mensaje += `\n_Generado por Cuentas Claras App by Zanni_ 👨‍💻📱`;
+            
+            const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+            window.open(url, '_blank');
+        }
+
+        function enviarTransacciones() {
+            const cantidad = personas.length;
+            const total = personas.reduce((sum, p) => sum + p.importe, 0);
+            const promedio = total / cantidad;
+            
+            const acreedores = [];
+            const deudores = [];
+            
+            personas.forEach(persona => {
+                const diferencia = persona.importe - promedio;
+                if (diferencia > 0.01) {
+                    acreedores.push({ nombre: persona.nombre, monto: diferencia });
+                } else if (diferencia < -0.01) {
+                    deudores.push({ nombre: persona.nombre, monto: Math.abs(diferencia) });
+                }
+            });
+
+            let mensaje = `🍖 *CUENTAS CLARAS - TRANSACCIONES* 🍖\n\n`;
+            mensaje += `*🔄 QUIÉN LE PAGA A QUIÉN:*\n\n`;
+
+            if (acreedores.length > 0 && deudores.length > 0) {
+                let acreedorIdx = 0;
+                let deudorIdx = 0;
+
+                while (acreedorIdx < acreedores.length && deudorIdx < deudores.length) {
+                    const acreedor = acreedores[acreedorIdx];
+                    const deudor = deudores[deudorIdx];
+                    const montoTransferencia = Math.min(acreedor.monto, deudor.monto);
+
+                    mensaje += `💳 *${deudor.nombre}* le da *${montoTransferencia.toFixed(2)}* a *${acreedor.nombre}*\n`;
+
+                    acreedor.monto -= montoTransferencia;
+                    deudor.monto -= montoTransferencia;
+
+                    if (acreedor.monto < 0.01) acreedorIdx++;
+                    if (deudor.monto < 0.01) deudorIdx++;
+                }
+            } else {
+                mensaje += `🎉 ¡Todas las cuentas están balanceadas!\n`;
+            }
+
+            mensaje += `\n_Generado por Cuentas Claras App by Zanni_ 👨‍💻📱`;
+            
+            const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+            window.open(url, '_blank');
+        }
+
+        // Animaciones adicionales
+        window.addEventListener('load', function() {
+            document.body.style.opacity = '0';
+            document.body.style.transform = 'translateY(20px)';
+            document.body.style.transition = 'all 0.6s ease';
+            
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+                document.body.style.transform = 'translateY(0)';
+            }, 100);
+        });
+    </script>
+</body>
+</html>
