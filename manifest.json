@@ -33,5 +33,34 @@
   "categories": ["finance", "utilities"],
   "lang": "es",
   "dir": "ltr",
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Home",
+      "description": "Go to the home page",
+      "url": "/",
+      "icons": [
+        {
+          "src": "https://via.placeholder.com/192x192/667eea/ffffff?text=CC",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any maskable"
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "description": "View and change settings",
+      "url": "/settings",
+      "icons": [
+        {
+          "src": "https://via.placeholder.com/192x192/667eea/ffffff?text=CC",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any maskable"
+        }
+      ]
+    }
+  ]
 }
+
