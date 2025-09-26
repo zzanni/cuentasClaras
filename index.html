@@ -544,7 +544,7 @@
 
     <script>
         let personas = [];
-        /*
+
         // Forzar recarga sin cache
         function forzarRecargaSinCache() {
             // Versión de la app para forzar actualizaciones
@@ -562,8 +562,7 @@
 
         // Ejecutar al cargar
         forzarRecargaSinCache();
-        */
-       /*
+
         // Detectar actualizaciones del Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -571,7 +570,7 @@
                 location.reload(true);
             });
         }
-        */
+
         function mostrarLoading(button) {
             const originalText = button.innerHTML;
             button.innerHTML = '<span class="loading"></span> Procesando...';
@@ -788,15 +787,33 @@
             }
         });
 
-        // PWA Service Worker
+        // PWA Service Worker con control de versiones
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(registration => {
-                        console.log('SW registrado con éxito:', registration);
-                    })
-                    .catch(error => {
-                        console.log('Fallo en el registro del SW:', error);
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js?v=' + Date.now())
+                    .then(function(registration) {
+                        console.log('SW registered: ', registration);
+                        
+                        // Verificar actualizaciones cada 30 segundos
+                        setInterval(() => {
+                            registration.update();
+                        }, 30000);
+                        
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed') {
+                                    if (navigator.serviceWorker.controller) {
+                                        // Nueva versión disponible
+                                        if (confirm('¡Nueva versión disponible! ¿Quieres actualizar?')) {
+                                            window.location.reload(true);
+                                        }
+                                    }
+                                }
+                            });
+                        });
+                    }, function(registrationError) {
+                        console.log('SW registration failed: ', registrationError);
                     });
             });
         }
@@ -810,4 +827,11 @@
             const installButton = document.createElement('button');
             installButton.className = 'install-button';
             installButton.innerHTML = '📱 Instalar App';
-        
+            installButton.addEventListener('click', () => {
+        // Your code here
+    });
+    
+    document.body.appendChild(installButton);
+});
+
+            
