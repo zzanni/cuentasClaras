@@ -1,57 +1,48 @@
-const CACHE_NAME = 'cuentas-claras-v' + Date.now();
-const STATIC_CACHE = 'cuentas-claras-static-v2.2.0';
+const CACHE_NAME = 'cuentas-claras-static-v2.2.0';
 const urlsToCache = [
   './',
   './index.html',
   './manifest.json'
 ];
 
-self.addEventListener('install', (event) => {
+// Instala el SW y cachea los archivos iniciales
+self.addEventListener('install', event => {
   self.skipWaiting();
-  
   event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then((cache) => {
-        console.log('Cache abierto');
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
   );
 });
 
-self.addEventListener('fetch', (event) => {
+// Siempre busca primero en la red; si falla, usa el caché
+self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-  
   event.respondWith(
     fetch(event.request)
-      .then((response) => {
-        if (response && response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(STATIC_CACHE)
-            .then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-        }
+      .then(response => {
+        // Actualiza el caché con el nuevo archivo
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseClone);
+        });
         return response;
       })
-      .catch(() => {
-        return caches.match(event.request);
-      })
+      .catch(() => caches.match(event.request))
   );
 });
 
-self.addEventListener('activate', (event) => {
+// Limpia cachés viejos cuando se activa el nuevo SW
+self.addEventListener('activate', event => {
   self.clients.claim();
-  
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== STATIC_CACHE && cacheName.startsWith('cuentas-claras-')) {
-            console.log('Eliminando cache viejo:', cacheName);
-            return caches.delete(cacheName);
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME && key.startsWith('cuentas-claras')) {
+            return caches.delete(key);
           }
         })
-      );
-    })
+      )
+    )
   );
 });
