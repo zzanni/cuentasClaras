@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cuentas Claras - División de Gastos</title>
+    <title>Cuanto Gastamos - División de Gastos</title>
     
     <!-- Anti-cache headers -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -14,7 +14,7 @@
     <meta name="theme-color" content="#667eea">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="CuentasClaras">
+    <meta name="apple-mobile-web-app-title" content="CuantoGastamos">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="./assets/icon-192x192.png">
     
@@ -514,7 +514,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🍖 Cuentas Claras</h1>
+            <h1>🍖 Cuanto Gastamos</h1>
             <p>La Cuenta Justa Para tu Asado o Reunión</p>
         </div>
 
@@ -542,7 +542,7 @@
         </div>
     </div>
 
-       <script>
+    <script>
 let personas = [];
 
 // Evita recarga infinita usando localStorage
@@ -835,7 +835,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 // Funciones WhatsApp
 function enviarWhatsAppIndividual(nombre, mensaje) {
-    const mensajeFinal = `🍖 *Cuentas Claras* 🍖\n\n${mensaje}\n\n_Mensaje generado por Cuentas Claras App by Zanni_ 👨‍💻`;
+    const mensajeFinal = `🍖 *Cuanto Gastamos* 🍖\n\n${mensaje}\n\n_Mensaje generado por Cuanto Gastamos App by Zanni_ 👨‍💻`;
     const url = `https://wa.me/?text=${encodeURIComponent(mensajeFinal)}`;
     window.open(url, '_blank');
 }
@@ -845,7 +845,7 @@ function enviarResumenCompleto() {
     const total = personas.reduce((sum, p) => sum + p.importe, 0);
     const promedio = total / cantidad;
 
-    let mensaje = `🍖 *CUENTAS CLARAS - RESUMEN COMPLETO* 🍖\n\n`;
+    let mensaje = `🍖 *CUANTO GASTAMOS - RESUMEN COMPLETO* 🍖\n\n`;
     mensaje += `💰 *Total gastado:* ${total.toFixed(2)}\n`;
     mensaje += `👥 *Personas:* ${cantidad}\n`;
     mensaje += `📊 *Cada uno debe:* ${promedio.toFixed(2)}\n\n`;
@@ -862,7 +862,7 @@ function enviarResumenCompleto() {
         }
     });
 
-    mensaje += `\n_Generado por Cuentas Claras App by Zanni_ 👨‍💻📱`;
+    mensaje += `\n_Generado por Cuanto Gastamos App by Zanni_ 👨‍💻📱`;
     
     const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
@@ -885,7 +885,7 @@ function enviarTransacciones() {
         }
     });
 
-    let mensaje = `🍖 *CUENTAS CLARAS - TRANSACCIONES* 🍖\n\n`;
+    let mensaje = `🍖 *CUANTO GASTAMOS - TRANSACCIONES* 🍖\n\n`;
     mensaje += `*🔄 QUIÉN LE PAGA A QUIÉN:*\n\n`;
 
     if (acreedores.length > 0 && deudores.length > 0) {
@@ -909,7 +909,7 @@ function enviarTransacciones() {
         mensaje += `🎉 ¡Todas las cuentas están balanceadas!\n`;
     }
 
-    mensaje += `\n_Generado por Cuentas Claras App by Zanni_ 👨‍💻📱`;
+    mensaje += `\n_Generado por Cuanto Gastamos App by Zanni_ 👨‍💻📱`;
     
     const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cuentas-claras-static-v2.2.0';
+const CACHE_NAME = 'cuanto-gastamos-static-v2.2.1';
 const urlsToCache = [
   './',
   './index.html',
@@ -38,7 +38,7 @@ self.addEventListener('activate', event => {
     caches.keys().then(keys =>
       Promise.all(
         keys.map(key => {
-          if (key !== CACHE_NAME && key.startsWith('cuentas-claras')) {
+          if (key !== CACHE_NAME && key.startsWith('cuanto-gastamos')) {
             return caches.delete(key);
           }
         })
