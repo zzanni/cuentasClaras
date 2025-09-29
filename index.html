@@ -542,389 +542,390 @@
         </div>
     </div>
 
-        <script>
-        let personas = [];
+       <script>
+let personas = [];
 
-        // Evita recarga infinita usando sessionStorage
-        function forzarRecargaSinCache() {
-            const VERSION_APP = '2.2.0';
-            const versionGuardada = localStorage.getItem('app_version');
-            
-            if (versionGuardada !== VERSION_APP) {
-                localStorage.setItem('app_version', VERSION_APP);
+// Evita recarga infinita usando localStorage
+function forzarRecargaSinCache() {
+    const VERSION_APP = '2.2.0';
+    const versionGuardada = localStorage.getItem('app_version');
+    
+    if (versionGuardada !== VERSION_APP) {
+        localStorage.setItem('app_version', VERSION_APP);
 
-                // Solo recarga si no lo has hecho en esta sesión
-                if (versionGuardada !== null && !sessionStorage.getItem('recargado')) {
-                    sessionStorage.setItem('recargado', 'true');
-                    location.reload();
-                }
-            }
+        // Solo recarga si no lo has hecho en esta sesión
+        if (versionGuardada !== null && !sessionStorage.getItem('recargado')) {
+            sessionStorage.setItem('recargado', 'true');
+            location.reload();
         }
-        forzarRecargaSinCache();
+    }
+}
+forzarRecargaSinCache();
 
-        // Service Worker: recarga solo una vez por sesión
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                if (!sessionStorage.getItem('recargadoSW')) {
-                    sessionStorage.setItem('recargadoSW', 'true');
-                    location.reload();
-                }
-            });
-        }
+// Service Worker: recarga solo una vez por actualización, evita bucle
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./sw.js?v=' + Date.now())
+            .then(function(registration) {
+                setInterval(() => {
+                    registration.update();
+                }, 30000);
 
-        function mostrarLoading(button) {
-            const originalText = button.innerHTML;
-            button.innerHTML = '<span class="loading"></span> Procesando...';
-            button.disabled = true;
-            
-            setTimeout(() => {
-                button.innerHTML = originalText;
-                button.disabled = false;
-            }, 800);
-        }
-
-        function crearFormulario(button) {
-            const cantidad = parseInt(document.getElementById('cantidad').value);
-            
-            if (!cantidad || cantidad < 2) {
-                alert('Por favor ingresa un número válido de personas (mínimo 2)');
-                return;
-            }
-
-            if (cantidad > 20) {
-                alert('Máximo 20 personas por división');
-                return;
-            }
-
-            mostrarLoading(button);
-
-            setTimeout(() => {
-                const container = document.getElementById('personasForm');
-                container.innerHTML = '';
-
-                for (let i = 0; i < cantidad; i++) {
-                    const personaCard = document.createElement('div');
-                    personaCard.className = 'persona-card';
-                    personaCard.style.animationDelay = `${i * 0.1}s`;
-                    personaCard.innerHTML = `
-                        <div class="persona-inputs">
-                            <div>
-                                <label>👤 Nombre:</label>
-                                <input type="text" id="nombre${i}" placeholder="Ej: ERNESTO" required oninput="this.value = this.value.toUpperCase()">
-                            </div>
-                            <div>
-                                <label>💰 Importe gastado ($):</label>
-                                <input type="number" id="importe${i}" min="0" step="0.01" placeholder="0.00" required>
-                            </div>
-                        </div>
-                    `;
-                    container.appendChild(personaCard);
-                }
-
-                document.getElementById('personasContainer').style.display = 'block';
-                document.getElementById('personasContainer').scrollIntoView({ behavior: 'smooth' });
-            }, 800);
-        }
-
-        function calcularDivision(button) {
-            const cantidad = parseInt(document.getElementById('cantidad').value);
-            personas = [];
-            let total = 0;
-
-            for (let i = 0; i < cantidad; i++) {
-                const nombre = document.getElementById(`nombre${i}`).value.trim().toUpperCase();
-                const importeInput = document.getElementById(`importe${i}`);
-                const importe = parseFloat(importeInput.value) || 0;
-
-                if (!nombre) {
-                    alert(`Por favor ingresa el nombre de la persona ${i + 1}`);
-                    document.getElementById(`nombre${i}`).focus();
-                    return;
-                }
-
-                if (importe < 0) {
-                    alert('Los importes no pueden ser negativos');
-                    importeInput.focus();
-                    return;
-                }
-
-                personas.push({ nombre, importe });
-                total += importe;
-            }
-
-            if (total === 0) {
-                alert('El total no puede ser 0. Ingresa al menos un gasto.');
-                return;
-            }
-
-            mostrarLoading(button);
-
-            setTimeout(() => {
-                const promedio = total / cantidad;
-                const acreedores = [];
-                const deudores = [];
-
-                let resultadoHTML = `
-                    <div class="total-info">
-                        <h3>💰 Total: $${total.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</h3>
-                        <p>Cada persona debe: $${promedio.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-                    </div>
-
-                    <div class="balance-section">
-                        <h3>📋 Balance Individual</h3>
-                `;
-
-                personas.forEach(persona => {
-                    const diferencia = persona.importe - promedio;
-                    if (Math.abs(diferencia) < 0.01) {
-                        resultadoHTML += `<div class="balance-item exacto">✅ <strong>${persona.nombre}</strong> entregó el valor exacto</div>`;
-                    } else if (diferencia > 0) {
-                        acreedores.push({ nombre: persona.nombre, monto: diferencia });
-                        resultadoHTML += `<div class="balance-item recibe">💵 <strong>${persona.nombre}</strong> recibirá $${diferencia.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>`;
-                    } else {
-                        deudores.push({ nombre: persona.nombre, monto: Math.abs(diferencia) });
-                        resultadoHTML += `<div class="balance-item debe">💸 <strong>${persona.nombre}</strong> debe agregar $${Math.abs(diferencia).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>`;
-                    }
-                });
-
-                resultadoHTML += '</div>';
-
-                if (acreedores.length > 0 && deudores.length > 0) {
-                    resultadoHTML += `
-                        <div class="transacciones-section">
-                            <h3>🔄 Transacciones Específicas</h3>
-                    `;
-
-                    let acreedorIdx = 0;
-                    let deudorIdx = 0;
-
-                    while (acreedorIdx < acreedores.length && deudorIdx < deudores.length) {
-                        const acreedor = acreedores[acreedorIdx];
-                        const deudor = deudores[deudorIdx];
-                        const montoTransferencia = Math.min(acreedor.monto, deudor.monto);
-
-                        resultadoHTML += `
-                            <div class="transaccion">
-                                💳 <strong>${deudor.nombre}</strong> le debe dar <strong>$${montoTransferencia.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong> a <strong>${acreedor.nombre}</strong>
-                            </div>
-                        `;
-
-                        acreedor.monto -= montoTransferencia;
-                        deudor.monto -= montoTransferencia;
-
-                        if (acreedor.monto < 0.01) acreedorIdx++;
-                        if (deudor.monto < 0.01) deudorIdx++;
-                    }
-
-                    resultadoHTML += '</div>';
-                } else {
-                    resultadoHTML += '<div class="balance-item exacto" style="text-align: center; font-size: 1.2rem; margin-top: 20px;">🎉 ¡Todas las cuentas están perfectamente balanceadas!</div>';
-                }
-
-                resultadoHTML += `
-                    <div class="whatsapp-section">
-                        <h3>📱 Enviar por WhatsApp</h3>
-                        <button class="whatsapp-btn" onclick="enviarResumenCompleto()">
-                            <span>📊</span> Enviar Resumen Completo
-                        </button>
-                        <button class="whatsapp-btn" onclick="enviarTransacciones()">
-                            <span>💸</span> Enviar Solo Transacciones
-                        </button>
-                        <br>
-                        <div style="margin-top: 15px;">
-                            <h4 style="color: #128c7e; margin-bottom: 10px;">Enviar a cada persona:</h4>
-                `;
-
-                personas.forEach((persona, index) => {
-                    const diferencia = persona.importe - promedio;
-                    let mensaje = '';
-                    
-                    if (Math.abs(diferencia) < 0.01) {
-                        mensaje = `¡Hola ${persona.nombre}! 😊 Entregaste exactamente lo que correspondía. ¡Perfecto!`;
-                    } else if (diferencia > 0) {
-                        mensaje = `¡Hola ${persona.nombre}! 💵 Te corresponde recibir $${diferencia.toFixed(2)} del asado.`;
-                    } else {
-                        mensaje = `¡Hola ${persona.nombre}! 💸 Te falta agregar $${Math.abs(diferencia).toFixed(2)} para el asado.`;
-                    }
-
-                    resultadoHTML += `
-                        <button class="whatsapp-btn" onclick="enviarWhatsAppIndividual('${persona.nombre}', '${mensaje}')">
-                            <span>👤</span> ${persona.nombre}
-                        </button>
-                    `;
-                });
-
-                resultadoHTML += `
-                        </div>
-                    </div>
-                `;
-
-                document.getElementById('resultadoContent').innerHTML = resultadoHTML;
-                document.getElementById('resultado').style.display = 'block';
-                document.getElementById('resultado').scrollIntoView({ behavior: 'smooth' });
-            }, 800);
-        }
-
-        function reiniciar() {
-            document.getElementById('cantidad').value = '';
-            document.getElementById('personasContainer').style.display = 'none';
-            document.getElementById('resultado').style.display = 'none';
-            document.getElementById('personasForm').innerHTML = '';
-            personas = [];
-            
-            document.querySelector('.container').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        document.getElementById('cantidad').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                document.querySelector('.btn').click();
-            }
-        });
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('./sw.js?v=' + Date.now())
-                    .then(function(registration) {
-                        console.log('SW registered: ', registration);
-                        
-                        setInterval(() => {
-                            registration.update();
-                        }, 30000);
-                        
-                        registration.addEventListener('updatefound', () => {
-                            const newWorker = registration.installing;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed') {
-                                    if (navigator.serviceWorker.controller) {
-                                        if (confirm('¡Nueva versión disponible! ¿Quieres actualizar?')) {
-                                            window.location.reload();
-                                        }
-                                    }
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (
+                            newWorker.state === 'installed' &&
+                            navigator.serviceWorker.controller
+                        ) {
+                            // Solo muestra el mensaje y recarga una vez por actualización
+                            if (!localStorage.getItem('actualizadoSW')) {
+                                if (confirm('¡Nueva versión disponible! ¿Quieres actualizar?')) {
+                                    localStorage.setItem('actualizadoSW', 'true');
+                                    window.location.reload();
                                 }
-                            });
-                        });
-                    }, function(registrationError) {
-                        console.log('SW registration failed: ', registrationError);
+                            }
+                        }
                     });
+                });
+            }, function(registrationError) {
+                console.log('SW registration failed: ', registrationError);
             });
+    });
+
+    // Cuando la página realmente carga, quita la bandera para futuras actualizaciones
+    window.addEventListener('DOMContentLoaded', function() {
+        if (localStorage.getItem('actualizadoSW')) {
+            localStorage.removeItem('actualizadoSW');
+        }
+    });
+}
+
+function mostrarLoading(button) {
+    const originalText = button.innerHTML;
+    button.innerHTML = '<span class="loading"></span> Procesando...';
+    button.disabled = true;
+    
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    }, 800);
+}
+
+function crearFormulario(button) {
+    const cantidad = parseInt(document.getElementById('cantidad').value);
+    
+    if (!cantidad || cantidad < 2) {
+        alert('Por favor ingresa un número válido de personas (mínimo 2)');
+        return;
+    }
+
+    if (cantidad > 20) {
+        alert('Máximo 20 personas por división');
+        return;
+    }
+
+    mostrarLoading(button);
+
+    setTimeout(() => {
+        const container = document.getElementById('personasForm');
+        container.innerHTML = '';
+
+        for (let i = 0; i < cantidad; i++) {
+            const personaCard = document.createElement('div');
+            personaCard.className = 'persona-card';
+            personaCard.style.animationDelay = `${i * 0.1}s`;
+            personaCard.innerHTML = `
+                <div class="persona-inputs">
+                    <div>
+                        <label>👤 Nombre:</label>
+                        <input type="text" id="nombre${i}" placeholder="Ej: ERNESTO" required oninput="this.value = this.value.toUpperCase()">
+                    </div>
+                    <div>
+                        <label>💰 Importe gastado ($):</label>
+                        <input type="number" id="importe${i}" min="0" step="0.01" placeholder="0.00" required>
+                    </div>
+                </div>
+            `;
+            container.appendChild(personaCard);
         }
 
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            
-            const installButton = document.createElement('button');
-            installButton.className = 'install-button';
-            installButton.innerHTML = '📱 Instalar App';
-            
-            installButton.addEventListener('click', () => {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
-                        installButton.remove();
-                    }
-                    deferredPrompt = null;
-                });
-            });
-            
-            document.body.appendChild(installButton);
+        document.getElementById('personasContainer').style.display = 'block';
+        document.getElementById('personasContainer').scrollIntoView({ behavior: 'smooth' });
+    }, 800);
+}
+
+function calcularDivision(button) {
+    const cantidad = parseInt(document.getElementById('cantidad').value);
+    personas = [];
+    let total = 0;
+
+    for (let i = 0; i < cantidad; i++) {
+        const nombre = document.getElementById(`nombre${i}`).value.trim().toUpperCase();
+        const importeInput = document.getElementById(`importe${i}`);
+        const importe = parseFloat(importeInput.value) || 0;
+
+        if (!nombre) {
+            alert(`Por favor ingresa el nombre de la persona ${i + 1}`);
+            document.getElementById(`nombre${i}`).focus();
+            return;
+        }
+
+        if (importe < 0) {
+            alert('Los importes no pueden ser negativos');
+            importeInput.focus();
+            return;
+        }
+
+        personas.push({ nombre, importe });
+        total += importe;
+    }
+
+    if (total === 0) {
+        alert('El total no puede ser 0. Ingresa al menos un gasto.');
+        return;
+    }
+
+    mostrarLoading(button);
+
+    setTimeout(() => {
+        const promedio = total / cantidad;
+        const acreedores = [];
+        const deudores = [];
+
+        let resultadoHTML = `
+            <div class="total-info">
+                <h3>💰 Total: $${total.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</h3>
+                <p>Cada persona debe: $${promedio.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+            </div>
+
+            <div class="balance-section">
+                <h3>📋 Balance Individual</h3>
+        `;
+
+        personas.forEach(persona => {
+            const diferencia = persona.importe - promedio;
+            if (Math.abs(diferencia) < 0.01) {
+                resultadoHTML += `<div class="balance-item exacto">✅ <strong>${persona.nombre}</strong> entregó el valor exacto</div>`;
+            } else if (diferencia > 0) {
+                acreedores.push({ nombre: persona.nombre, monto: diferencia });
+                resultadoHTML += `<div class="balance-item recibe">💵 <strong>${persona.nombre}</strong> recibirá $${diferencia.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>`;
+            } else {
+                deudores.push({ nombre: persona.nombre, monto: Math.abs(diferencia) });
+                resultadoHTML += `<div class="balance-item debe">💸 <strong>${persona.nombre}</strong> debe agregar $${Math.abs(diferencia).toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>`;
+            }
         });
 
-        // Funciones WhatsApp
-        function enviarWhatsAppIndividual(nombre, mensaje) {
-            const mensajeFinal = `🍖 *Cuentas Claras* 🍖\n\n${mensaje}\n\n_Mensaje generado por Cuentas Claras App by Zanni_ 👨‍💻`;
-            const url = `https://wa.me/?text=${encodeURIComponent(mensajeFinal)}`;
-            window.open(url, '_blank');
-        }
+        resultadoHTML += '</div>';
 
-        function enviarResumenCompleto() {
-            const cantidad = personas.length;
-            const total = personas.reduce((sum, p) => sum + p.importe, 0);
-            const promedio = total / cantidad;
+        if (acreedores.length > 0 && deudores.length > 0) {
+            resultadoHTML += `
+                <div class="transacciones-section">
+                    <h3>🔄 Transacciones Específicas</h3>
+            `;
 
-            let mensaje = `🍖 *CUENTAS CLARAS - RESUMEN COMPLETO* 🍖\n\n`;
-            mensaje += `💰 *Total gastado:* ${total.toFixed(2)}\n`;
-            mensaje += `👥 *Personas:* ${cantidad}\n`;
-            mensaje += `📊 *Cada uno debe:* ${promedio.toFixed(2)}\n\n`;
-            
-            mensaje += `*📋 BALANCE INDIVIDUAL:*\n`;
-            personas.forEach(persona => {
-                const diferencia = persona.importe - promedio;
-                if (Math.abs(diferencia) < 0.01) {
-                    mensaje += `✅ ${persona.nombre}: Valor exacto\n`;
-                } else if (diferencia > 0) {
-                    mensaje += `💵 ${persona.nombre}: Recibe ${diferencia.toFixed(2)}\n`;
-                } else {
-                    mensaje += `💸 ${persona.nombre}: Debe ${Math.abs(diferencia).toFixed(2)}\n`;
-                }
-            });
+            let acreedorIdx = 0;
+            let deudorIdx = 0;
 
-            mensaje += `\n_Generado por Cuentas Claras App by Zanni_ 👨‍💻📱`;
-            
-            const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-            window.open(url, '_blank');
-        }
+            while (acreedorIdx < acreedores.length && deudorIdx < deudores.length) {
+                const acreedor = acreedores[acreedorIdx];
+                const deudor = deudores[deudorIdx];
+                const montoTransferencia = Math.min(acreedor.monto, deudor.monto);
 
-        function enviarTransacciones() {
-            const cantidad = personas.length;
-            const total = personas.reduce((sum, p) => sum + p.importe, 0);
-            const promedio = total / cantidad;
-            
-            const acreedores = [];
-            const deudores = [];
-            
-            personas.forEach(persona => {
-                const diferencia = persona.importe - promedio;
-                if (diferencia > 0.01) {
-                    acreedores.push({ nombre: persona.nombre, monto: diferencia });
-                } else if (diferencia < -0.01) {
-                    deudores.push({ nombre: persona.nombre, monto: Math.abs(diferencia) });
-                }
-            });
+                resultadoHTML += `
+                    <div class="transaccion">
+                        💳 <strong>${deudor.nombre}</strong> le debe dar <strong>$${montoTransferencia.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong> a <strong>${acreedor.nombre}</strong>
+                    </div>
+                `;
 
-            let mensaje = `🍖 *CUENTAS CLARAS - TRANSACCIONES* 🍖\n\n`;
-            mensaje += `*🔄 QUIÉN LE PAGA A QUIÉN:*\n\n`;
+                acreedor.monto -= montoTransferencia;
+                deudor.monto -= montoTransferencia;
 
-            if (acreedores.length > 0 && deudores.length > 0) {
-                let acreedorIdx = 0;
-                let deudorIdx = 0;
-
-                while (acreedorIdx < acreedores.length && deudorIdx < deudores.length) {
-                    const acreedor = acreedores[acreedorIdx];
-                    const deudor = deudores[deudorIdx];
-                    const montoTransferencia = Math.min(acreedor.monto, deudor.monto);
-
-                    mensaje += `💳 *${deudor.nombre}* le da *${montoTransferencia.toFixed(2)}* a *${acreedor.nombre}*\n`;
-
-                    acreedor.monto -= montoTransferencia;
-                    deudor.monto -= montoTransferencia;
-
-                    if (acreedor.monto < 0.01) acreedorIdx++;
-                    if (deudor.monto < 0.01) deudorIdx++;
-                }
-            } else {
-                mensaje += `🎉 ¡Todas las cuentas están balanceadas!\n`;
+                if (acreedor.monto < 0.01) acreedorIdx++;
+                if (deudor.monto < 0.01) deudorIdx++;
             }
 
-            mensaje += `\n_Generado por Cuentas Claras App by Zanni_ 👨‍💻📱`;
-            
-            const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-            window.open(url, '_blank');
+            resultadoHTML += '</div>';
+        } else {
+            resultadoHTML += '<div class="balance-item exacto" style="text-align: center; font-size: 1.2rem; margin-top: 20px;">🎉 ¡Todas las cuentas están perfectamente balanceadas!</div>';
         }
 
-        // Animaciones adicionales
-        window.addEventListener('load', function() {
-            document.body.style.opacity = '0';
-            document.body.style.transform = 'translateY(20px)';
-            document.body.style.transition = 'all 0.6s ease';
+        resultadoHTML += `
+            <div class="whatsapp-section">
+                <h3>📱 Enviar por WhatsApp</h3>
+                <button class="whatsapp-btn" onclick="enviarResumenCompleto()">
+                    <span>📊</span> Enviar Resumen Completo
+                </button>
+                <button class="whatsapp-btn" onclick="enviarTransacciones()">
+                    <span>💸</span> Enviar Solo Transacciones
+                </button>
+                <br>
+                <div style="margin-top: 15px;">
+                    <h4 style="color: #128c7e; margin-bottom: 10px;">Enviar a cada persona:</h4>
+        `;
+
+        personas.forEach((persona, index) => {
+            const diferencia = persona.importe - promedio;
+            let mensaje = '';
             
-            setTimeout(() => {
-                document.body.style.opacity = '1';
-                document.body.style.transform = 'translateY(0)';
-            }, 100);
+            if (Math.abs(diferencia) < 0.01) {
+                mensaje = `¡Hola ${persona.nombre}! 😊 Entregaste exactamente lo que correspondía. ¡Perfecto!`;
+            } else if (diferencia > 0) {
+                mensaje = `¡Hola ${persona.nombre}! 💵 Te corresponde recibir $${diferencia.toFixed(2)} del asado.`;
+            } else {
+                mensaje = `¡Hola ${persona.nombre}! 💸 Te falta agregar $${Math.abs(diferencia).toFixed(2)} para el asado.`;
+            }
+
+            resultadoHTML += `
+                <button class="whatsapp-btn" onclick="enviarWhatsAppIndividual('${persona.nombre}', '${mensaje}')">
+                    <span>👤</span> ${persona.nombre}
+                </button>
+            `;
         });
-    </script>
+
+        resultadoHTML += `
+                </div>
+            </div>
+        `;
+
+        document.getElementById('resultadoContent').innerHTML = resultadoHTML;
+        document.getElementById('resultado').style.display = 'block';
+        document.getElementById('resultado').scrollIntoView({ behavior: 'smooth' });
+    }, 800);
+}
+
+function reiniciar() {
+    document.getElementById('cantidad').value = '';
+    document.getElementById('personasContainer').style.display = 'none';
+    document.getElementById('resultado').style.display = 'none';
+    document.getElementById('personasForm').innerHTML = '';
+    personas = [];
+    
+    document.querySelector('.container').scrollIntoView({ behavior: 'smooth' });
+}
+
+document.getElementById('cantidad').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        document.querySelector('.btn').click();
+    }
+});
+
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    const installButton = document.createElement('button');
+    installButton.className = 'install-button';
+    installButton.innerHTML = '📱 Instalar App';
+    
+    installButton.addEventListener('click', () => {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+                installButton.remove();
+            }
+            deferredPrompt = null;
+        });
+    });
+    
+    document.body.appendChild(installButton);
+});
+
+// Funciones WhatsApp
+function enviarWhatsAppIndividual(nombre, mensaje) {
+    const mensajeFinal = `🍖 *Cuentas Claras* 🍖\n\n${mensaje}\n\n_Mensaje generado por Cuentas Claras App by Zanni_ 👨‍💻`;
+    const url = `https://wa.me/?text=${encodeURIComponent(mensajeFinal)}`;
+    window.open(url, '_blank');
+}
+
+function enviarResumenCompleto() {
+    const cantidad = personas.length;
+    const total = personas.reduce((sum, p) => sum + p.importe, 0);
+    const promedio = total / cantidad;
+
+    let mensaje = `🍖 *CUENTAS CLARAS - RESUMEN COMPLETO* 🍖\n\n`;
+    mensaje += `💰 *Total gastado:* ${total.toFixed(2)}\n`;
+    mensaje += `👥 *Personas:* ${cantidad}\n`;
+    mensaje += `📊 *Cada uno debe:* ${promedio.toFixed(2)}\n\n`;
+    
+    mensaje += `*📋 BALANCE INDIVIDUAL:*\n`;
+    personas.forEach(persona => {
+        const diferencia = persona.importe - promedio;
+        if (Math.abs(diferencia) < 0.01) {
+            mensaje += `✅ ${persona.nombre}: Valor exacto\n`;
+        } else if (diferencia > 0) {
+            mensaje += `💵 ${persona.nombre}: Recibe ${diferencia.toFixed(2)}\n`;
+        } else {
+            mensaje += `💸 ${persona.nombre}: Debe ${Math.abs(diferencia).toFixed(2)}\n`;
+        }
+    });
+
+    mensaje += `\n_Generado por Cuentas Claras App by Zanni_ 👨‍💻📱`;
+    
+    const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
+}
+
+function enviarTransacciones() {
+    const cantidad = personas.length;
+    const total = personas.reduce((sum, p) => sum + p.importe, 0);
+    const promedio = total / cantidad;
+    
+    const acreedores = [];
+    const deudores = [];
+    
+    personas.forEach(persona => {
+        const diferencia = persona.importe - promedio;
+        if (diferencia > 0.01) {
+            acreedores.push({ nombre: persona.nombre, monto: diferencia });
+        } else if (diferencia < -0.01) {
+            deudores.push({ nombre: persona.nombre, monto: Math.abs(diferencia) });
+        }
+    });
+
+    let mensaje = `🍖 *CUENTAS CLARAS - TRANSACCIONES* 🍖\n\n`;
+    mensaje += `*🔄 QUIÉN LE PAGA A QUIÉN:*\n\n`;
+
+    if (acreedores.length > 0 && deudores.length > 0) {
+        let acreedorIdx = 0;
+        let deudorIdx = 0;
+
+        while (acreedorIdx < acreedores.length && deudorIdx < deudores.length) {
+            const acreedor = acreedores[acreedorIdx];
+            const deudor = deudores[deudorIdx];
+            const montoTransferencia = Math.min(acreedor.monto, deudor.monto);
+
+            mensaje += `💳 *${deudor.nombre}* le da *${montoTransferencia.toFixed(2)}* a *${acreedor.nombre}*\n`;
+
+            acreedor.monto -= montoTransferencia;
+            deudor.monto -= montoTransferencia;
+
+            if (acreedor.monto < 0.01) acreedorIdx++;
+            if (deudor.monto < 0.01) deudorIdx++;
+        }
+    } else {
+        mensaje += `🎉 ¡Todas las cuentas están balanceadas!\n`;
+    }
+
+    mensaje += `\n_Generado por Cuentas Claras App by Zanni_ 👨‍💻📱`;
+    
+    const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
+}
+
+// Animaciones adicionales
+window.addEventListener('load', function() {
+    document.body.style.opacity = '0';
+    document.body.style.transform = 'translateY(20px)';
+    document.body.style.transition = 'all 0.6s ease';
+    
+    setTimeout(() => {
+        document.body.style.opacity = '1';
+        document.body.style.transform = 'translateY(0)';
+    }, 100);
+});
+</script>
 </body>
 </html>
