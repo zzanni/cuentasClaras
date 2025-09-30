@@ -550,26 +550,20 @@ function forzarRecargaSinCache() {
     const VERSION_APP = '2.2.0';
     const versionGuardada = localStorage.getItem('app_version');
     
-    if (versionGuardada !== VERSION_APP) {
-        localStorage.setItem('app_version', VERSION_APP);
-
-        // Solo recarga si no lo has hecho en esta sesión
-        if (versionGuardada !== null && !sessionStorage.getItem('recargado')) {
-            sessionStorage.setItem('recargado', 'true');
-            location.reload();
-        }
-    }
+    // Elimina la bandera de actualización al cargar la página
+if (localStorage.getItem('actualizadoSW')) {
+    localStorage.removeItem('actualizadoSW');
 }
-forzarRecargaSinCache();
 
-// Service Worker: recarga solo una vez por actualización, evita bucle
+// Registro y control del Service Worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-        navigator.serviceWorker.register('./sw.js?v=' + Date.now())
+        navigator.serviceWorker.register('./sw.js')
             .then(function(registration) {
+                // Opcional: actualiza el SW cada 5 minutos
                 setInterval(() => {
                     registration.update();
-                }, 30000);
+                }, 5 * 60 * 1000);
 
                 registration.addEventListener('updatefound', () => {
                     const newWorker = registration.installing;
@@ -578,20 +572,19 @@ if ('serviceWorker' in navigator) {
                             newWorker.state === 'installed' &&
                             navigator.serviceWorker.controller
                         ) {
-                            // Solo muestra el mensaje y recarga una vez por actualización
+                            // Solo muestra el cartel UNA vez por actualización
                             if (!localStorage.getItem('actualizadoSW')) {
+                                localStorage.setItem('actualizadoSW', 'true');
                                 if (confirm('¡Nueva versión disponible! ¿Quieres actualizar?')) {
-                                    localStorage.setItem('actualizadoSW', 'true');
                                     window.location.reload();
                                 }
                             }
                         }
                     });
                 });
-            }, function(registrationError) {
-                console.log('SW registration failed: ', registrationError);
             });
     });
+}
 
     // Cuando la página realmente carga, quita la bandera para futuras actualizaciones
     window.addEventListener('DOMContentLoaded', function() {
